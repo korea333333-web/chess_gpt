@@ -73,6 +73,7 @@ export class ChessRules {
       drawReason: status === "draw" ? this.getDrawReason() : null,
       inCheck: this.chess.isCheck(),
       board: this.getBoardPieces(),
+      legalMoves: this.legalMoves(),
       history: this.chess.history({ verbose: true }).map(toMoveRecord)
     };
   }

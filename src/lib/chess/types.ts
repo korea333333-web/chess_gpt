@@ -44,7 +44,7 @@ export type LegalMove = {
   lan: string;
   piece: PieceType;
   captured?: PieceType;
-  promotion?: PieceType;
+  promotion?: PromotionPiece;
   isCapture: boolean;
   isPromotion: boolean;
   isEnPassant: boolean;
@@ -67,6 +67,7 @@ export type GameSnapshot = {
   drawReason: DrawReason | null;
   inCheck: boolean;
   board: BoardPiece[];
+  legalMoves: LegalMove[];
   history: MoveRecord[];
 };
 
@@ -109,6 +110,22 @@ export function toAppPiece(piece: PieceSymbol): PieceType {
   }
 }
 
+export function toAppPromotionPiece(piece: PieceSymbol): PromotionPiece {
+  switch (piece) {
+    case "n":
+      return "knight";
+    case "b":
+      return "bishop";
+    case "r":
+      return "rook";
+    case "q":
+      return "queen";
+    case "p":
+    case "k":
+      return "queen";
+  }
+}
+
 export function toChessJsPromotion(piece: PromotionPiece): ChessJsPromotion {
   switch (piece) {
     case "knight":
@@ -130,7 +147,7 @@ export function toLegalMove(move: ChessJsMove): LegalMove {
     lan: move.lan,
     piece: toAppPiece(move.piece),
     captured: move.captured ? toAppPiece(move.captured) : undefined,
-    promotion: move.promotion ? toAppPiece(move.promotion) : undefined,
+    promotion: move.promotion ? toAppPromotionPiece(move.promotion) : undefined,
     isCapture: move.isCapture(),
     isPromotion: move.isPromotion(),
     isEnPassant: move.isEnPassant(),

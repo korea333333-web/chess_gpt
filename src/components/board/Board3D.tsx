@@ -12,9 +12,19 @@ import { Square } from "./Square";
 
 type Board3DProps = {
   snapshot: GameSnapshot;
+  selectedSquare?: ChessSquare | null;
+  legalTargets?: ChessSquare[];
+  lastMove?: { from: ChessSquare; to: ChessSquare } | null;
+  onSquareClick?: (square: ChessSquare) => void;
 };
 
-export default function Board3D({ snapshot }: Board3DProps) {
+export default function Board3D({
+  snapshot,
+  selectedSquare = null,
+  legalTargets = [],
+  lastMove = null,
+  onSquareClick
+}: Board3DProps) {
   const squares = ranks
     .slice()
     .reverse()
@@ -39,13 +49,21 @@ export default function Board3D({ snapshot }: Board3DProps) {
               <meshStandardMaterial color="#24150d" roughness={0.64} />
             </mesh>
             {squares.map((square) => (
-              <Square key={square} square={square} />
+              <Square
+                key={square}
+                square={square}
+                isSelected={selectedSquare === square}
+                isLegalTarget={legalTargets.includes(square)}
+                isLastMove={lastMove?.from === square || lastMove?.to === square}
+                onClick={onSquareClick}
+              />
             ))}
             {snapshot.board.map((piece) => (
               <Piece
                 key={`${piece.color}-${piece.type}-${piece.square}`}
                 piece={piece}
                 position={squareToBoardPosition(piece.square)}
+                onClick={onSquareClick}
               />
             ))}
           </group>

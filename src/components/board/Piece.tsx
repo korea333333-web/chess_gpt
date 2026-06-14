@@ -5,6 +5,7 @@ import type { BoardPiece } from "@/lib/chess/types";
 type PieceProps = {
   piece: BoardPiece;
   position: [number, number, number];
+  onClick?: (square: BoardPiece["square"]) => void;
 };
 
 const pieceMaterial = {
@@ -20,12 +21,19 @@ const pieceMaterial = {
   }
 } as const;
 
-export function Piece({ piece, position }: PieceProps) {
+export function Piece({ piece, position, onClick }: PieceProps) {
   const material = pieceMaterial[piece.color];
   const y = 0.03;
 
   return (
-    <group position={[position[0], y, position[2]]} castShadow>
+    <group
+      position={[position[0], y, position[2]]}
+      castShadow
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.(piece.square);
+      }}
+    >
       <mesh castShadow receiveShadow position={[0, 0.04, 0]}>
         <cylinderGeometry args={[0.32, 0.38, 0.08, 36]} />
         <meshStandardMaterial {...material} />
