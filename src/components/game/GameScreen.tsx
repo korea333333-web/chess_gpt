@@ -4,7 +4,11 @@ import dynamic from "next/dynamic";
 import { Controls } from "@/components/ui/Controls";
 import { MoveList } from "@/components/ui/MoveList";
 import { StatusBar } from "@/components/ui/StatusBar";
-import { boardViewportClassName, gameMainClassName, sidePanelClassName } from "@/lib/layout/responsive";
+import {
+  boardViewportClassName,
+  gameMainClassName,
+  sidePanelClassName
+} from "@/lib/layout/responsive";
 import { useGameStore } from "@/lib/store";
 
 const Board3D = dynamic(() => import("@/components/board/Board3D"), {
@@ -96,12 +100,6 @@ export function GameScreen() {
             </div>
           ) : null}
           <MoveList history={snapshot.history} />
-          <div className="hidden sm:block">
-            <p className="text-sm text-[#a18d70]">FEN</p>
-            <pre className="mt-2 overflow-x-auto border border-[#6f5636] bg-black/25 p-3 text-xs text-[#e5dac5]">
-              {snapshot.fen}
-            </pre>
-          </div>
         </aside>
       </section>
     </main>

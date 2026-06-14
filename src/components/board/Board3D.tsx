@@ -2,11 +2,15 @@
 
 import { Canvas } from "@react-three/fiber";
 import type { Square as ChessSquare } from "chess.js";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { squareToBoardPosition, files, ranks } from "@/lib/board/coordinates";
 import type { GameSnapshot } from "@/lib/chess/types";
 import { boardViewportClassName } from "@/lib/layout/responsive";
 import { fixedCameraView } from "@/lib/scene/camera";
+import {
+  getBoardDprRangeForWidth,
+  highQualityGlOptions
+} from "@/lib/scene/renderQuality";
 import { Camera } from "@/components/scene/Camera";
 import { Lighting } from "@/components/scene/Lighting";
 import { Piece } from "./Piece";
@@ -31,13 +35,14 @@ export default function Board3D({
     .slice()
     .reverse()
     .flatMap((rank) => files.map((file) => `${file}${rank}` as ChessSquare));
+  const dprRange = useResponsiveDprRange();
 
   return (
     <div className={boardViewportClassName}>
       <Canvas
         shadows
-        gl={{ antialias: true, alpha: false }}
-        dpr={[1, 1.75]}
+        gl={highQualityGlOptions}
+        dpr={dprRange}
         camera={{ position: fixedCameraView.position, fov: fixedCameraView.fov }}
       >
         <color attach="background" args={["#18100b"]} />
@@ -73,4 +78,27 @@ export default function Board3D({
       </Canvas>
     </div>
   );
+}
+
+function useResponsiveDprRange() {
+  const [dprRange, setDprRange] = useState(() =>
+    getBoardDprRangeForWidth(
+      typeof window === "undefined" ? 1024 : window.innerWidth
+    )
+  );
+
+  useEffect(() => {
+    const updateDprRange = () => {
+      setDprRange(getBoardDprRangeForWidth(window.innerWidth));
+    };
+
+    updateDprRange();
+    window.addEventListener("resize", updateDprRange);
+
+    return () => {
+      window.removeEventListener("resize", updateDprRange);
+    };
+  }, []);
+
+  return dprRange;
 }
