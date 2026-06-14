@@ -1,18 +1,21 @@
 "use client";
 
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { fixedCameraControls, fixedCameraView } from "@/lib/scene/camera";
 
 export function Camera() {
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 7.2, 7.6]} fov={42} />
+      <PerspectiveCamera
+        makeDefault
+        position={fixedCameraView.position}
+        fov={fixedCameraView.fov}
+      />
       <OrbitControls
-        enablePan={false}
-        minDistance={6}
-        maxDistance={11}
-        minPolarAngle={0.45}
-        maxPolarAngle={1.05}
-        target={[0, 0, 0]}
+        enablePan={fixedCameraControls.enablePan}
+        enableRotate={fixedCameraControls.enableRotate}
+        enableZoom={fixedCameraControls.enableZoom}
+        target={fixedCameraView.target}
       />
     </>
   );

@@ -5,6 +5,7 @@ import type { Square as ChessSquare } from "chess.js";
 import { Suspense } from "react";
 import { squareToBoardPosition, files, ranks } from "@/lib/board/coordinates";
 import type { GameSnapshot } from "@/lib/chess/types";
+import { fixedCameraView } from "@/lib/scene/camera";
 import { Camera } from "@/components/scene/Camera";
 import { Lighting } from "@/components/scene/Lighting";
 import { Piece } from "./Piece";
@@ -36,7 +37,7 @@ export default function Board3D({
         shadows
         gl={{ antialias: true, alpha: false }}
         dpr={[1, 1.75]}
-        camera={{ position: [0, 7.2, 7.6], fov: 42 }}
+        camera={{ position: fixedCameraView.position, fov: fixedCameraView.fov }}
       >
         <color attach="background" args={["#18100b"]} />
         <fog attach="fog" args={["#18100b", 11, 19]} />
