@@ -37,20 +37,20 @@ const materials: Record<
   }
 > = {
   white: {
-    color: "#f2dfbb",
-    roughness: 0.48,
-    metalness: 0.05
+    color: "#f8f1df",
+    roughness: 0.2,
+    metalness: 0.08
   },
   black: {
-    color: "#2b1a12",
-    roughness: 0.42,
-    metalness: 0.1
+    color: "#080604",
+    roughness: 0.18,
+    metalness: 0.16
   }
 };
 
 const rimMaterials: Record<PieceColor, { color: string; roughness: number; metalness: number }> = {
-  white: { color: "#c59b5c", roughness: 0.32, metalness: 0.22 },
-  black: { color: "#6c4628", roughness: 0.36, metalness: 0.18 }
+  white: { color: "#d7a83f", roughness: 0.18, metalness: 0.55 },
+  black: { color: "#d7a83f", roughness: 0.16, metalness: 0.58 }
 };
 
 export function getPieceSilhouette(type: PieceType) {

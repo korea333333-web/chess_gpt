@@ -1,25 +1,47 @@
 "use client";
 
 import { ContactShadows } from "@react-three/drei";
+import {
+  ambientLightConfig,
+  backLightConfig,
+  blackPieceFillLightConfig,
+  contactShadowConfig,
+  keyLightConfig
+} from "@/lib/scene/lightingConfig";
 
 export function Lighting() {
   return (
     <>
-      <ambientLight intensity={0.95} />
+      <ambientLight intensity={ambientLightConfig.intensity} />
       <directionalLight
         castShadow
-        position={[3.5, 6, 3]}
-        intensity={1.7}
+        color={keyLightConfig.color}
+        position={keyLightConfig.position}
+        intensity={keyLightConfig.intensity}
         shadow-mapSize={[2048, 2048]}
       />
-      <pointLight position={[-3, 4, -4]} intensity={0.45} color="#d9b573" />
+      <spotLight
+        castShadow
+        angle={backLightConfig.angle}
+        color={backLightConfig.color}
+        intensity={backLightConfig.intensity}
+        penumbra={backLightConfig.penumbra}
+        position={backLightConfig.position}
+        target-position={[0, 0.2, -2.4]}
+      />
+      <pointLight
+        position={blackPieceFillLightConfig.position}
+        intensity={blackPieceFillLightConfig.intensity}
+        color={blackPieceFillLightConfig.color}
+      />
+      <pointLight position={[-3, 4, -4]} intensity={0.42} color="#d9b573" />
       <ContactShadows
-        opacity={0.38}
-        scale={10}
-        blur={2.2}
-        far={4}
-        resolution={1024}
-        color="#130d09"
+        opacity={contactShadowConfig.opacity}
+        scale={contactShadowConfig.scale}
+        blur={contactShadowConfig.blur}
+        far={contactShadowConfig.far}
+        resolution={contactShadowConfig.resolution}
+        color={contactShadowConfig.color}
       />
     </>
   );

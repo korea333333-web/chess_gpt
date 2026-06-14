@@ -178,8 +178,12 @@ export function Piece({
       }}
     >
       <LatheBody material={material} type={piece.type} />
+      <LuxuryBaseBand color={piece.color} material={rimMaterial} type={piece.type} />
+      <GoldRing material={rimMaterial} radius={0.34} tube={0.018} y={0.055} />
       <Collar material={rimMaterial} radius={0.29} y={0.115} />
+      <DiamondBand color={piece.color} material={rimMaterial} type={piece.type} />
       <Collar material={rimMaterial} radius={0.2} y={0.19} />
+      <GoldRing material={rimMaterial} radius={0.205} tube={0.012} y={0.58} />
       {renderPieceTop(piece.type, piece.color, material, rimMaterial)}
     </group>
   );
@@ -216,6 +220,93 @@ function Collar({
   );
 }
 
+function GoldRing({
+  y,
+  radius,
+  tube,
+  material
+}: {
+  y: number;
+  radius: number;
+  tube: number;
+  material: MaterialProps;
+}) {
+  return (
+    <mesh castShadow position={[0, y, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <torusGeometry args={[radius, tube, 12, 72]} />
+      <meshStandardMaterial {...material} />
+    </mesh>
+  );
+}
+
+function LuxuryBaseBand({
+  color,
+  type,
+  material
+}: {
+  color: PieceColor;
+  type: PieceType;
+  material: MaterialProps;
+}) {
+  const darkInlay = color === "white" ? "#1a100b" : "#f8f1df";
+  const shouldUseWideBand = type === "rook" || type === "queen" || type === "king";
+
+  return (
+    <>
+      <GoldRing material={material} radius={0.33} tube={0.02} y={0.015} />
+      <GoldRing material={material} radius={0.31} tube={0.014} y={0.095} />
+      {shouldUseWideBand ? (
+        <mesh castShadow position={[0, 0.255, 0]}>
+          <cylinderGeometry args={[0.255, 0.275, 0.08, 56]} />
+          <meshStandardMaterial color={darkInlay} roughness={0.26} metalness={0.08} />
+        </mesh>
+      ) : null}
+    </>
+  );
+}
+
+function DiamondBand({
+  color,
+  type,
+  material
+}: {
+  color: PieceColor;
+  type: PieceType;
+  material: MaterialProps;
+}) {
+  if (type === "pawn" || type === "bishop") {
+    return null;
+  }
+
+  const alternateColor = color === "white" ? "#1a100b" : "#f8f1df";
+
+  return (
+    <group position={[0, 0.255, 0]}>
+      {Array.from({ length: 16 }, (_, index) => {
+        const angle = (Math.PI * 2 * index) / 16;
+        const radius = 0.282;
+        const isGold = index % 2 === 0;
+
+        return (
+          <mesh
+            castShadow
+            key={angle}
+            position={[Math.cos(angle) * radius, 0, Math.sin(angle) * radius]}
+            rotation={[0, -angle, Math.PI / 4]}
+          >
+            <boxGeometry args={[0.055, 0.055, 0.018]} />
+            <meshStandardMaterial
+              {...(isGold
+                ? material
+                : { color: alternateColor, roughness: 0.22, metalness: 0.08 })}
+            />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
 function renderPieceTop(
   type: PieceType,
   color: PieceColor,
@@ -225,18 +316,22 @@ function renderPieceTop(
   switch (type) {
     case "pawn":
       return (
-        <mesh castShadow position={[0, 0.67, 0]} scale={[0.19, 0.19, 0.19]}>
-          <sphereGeometry args={[1, 40, 20]} />
-          <meshStandardMaterial {...material} />
-        </mesh>
+        <>
+          <GoldRing material={rimMaterial} radius={0.17} tube={0.012} y={0.535} />
+          <mesh castShadow position={[0, 0.67, 0]} scale={[0.19, 0.19, 0.19]}>
+            <sphereGeometry args={[1, 40, 20]} />
+            <meshStandardMaterial {...material} />
+          </mesh>
+        </>
       );
     case "rook":
       return (
         <>
           <mesh castShadow position={[0, 0.85, 0]}>
             <cylinderGeometry args={[0.28, 0.28, 0.08, 56]} />
-            <meshStandardMaterial {...material} />
+            <meshStandardMaterial {...rimMaterial} />
           </mesh>
+          <GoldRing material={rimMaterial} radius={0.26} tube={0.016} y={0.79} />
           {Array.from({ length: 6 }, (_, index) => {
             const angle = (Math.PI * 2 * index) / 6;
             return (
@@ -247,7 +342,7 @@ function renderPieceTop(
                 rotation={[0, -angle, 0]}
               >
                 <boxGeometry args={[0.1, 0.14, 0.12]} />
-                <meshStandardMaterial {...material} />
+                <meshStandardMaterial {...rimMaterial} />
               </mesh>
             );
           })}
@@ -263,19 +358,20 @@ function renderPieceTop(
             <meshStandardMaterial {...material} />
           </mesh>
           <mesh castShadow position={[0.065, 0.88, 0]} rotation={[0, 0, -0.54]}>
-            <boxGeometry args={[0.035, 0.28, 0.055]} />
+            <boxGeometry args={[0.055, 0.3, 0.07]} />
             <meshStandardMaterial {...rimMaterial} />
           </mesh>
           <mesh castShadow position={[0, 1.06, 0]} scale={[0.07, 0.07, 0.07]}>
             <sphereGeometry args={[1, 24, 12]} />
-            <meshStandardMaterial {...material} />
+            <meshStandardMaterial {...rimMaterial} />
           </mesh>
         </>
       );
     case "queen":
       return (
         <>
-          <CrownPearls material={material} radius={0.25} y={1.1} />
+          <GoldRing material={rimMaterial} radius={0.23} tube={0.015} y={1.035} />
+          <CrownPearls material={rimMaterial} radius={0.25} y={1.1} />
           <mesh castShadow position={[0, 1.15, 0]} scale={[0.075, 0.075, 0.075]}>
             <sphereGeometry args={[1, 24, 12]} />
             <meshStandardMaterial {...rimMaterial} />
@@ -289,13 +385,14 @@ function renderPieceTop(
             <sphereGeometry args={[1, 28, 14]} />
             <meshStandardMaterial {...material} />
           </mesh>
+          <GoldRing material={rimMaterial} radius={0.16} tube={0.014} y={1.14} />
           <mesh castShadow position={[0, 1.28, 0]}>
             <boxGeometry args={[0.065, 0.28, 0.065]} />
-            <meshStandardMaterial {...material} />
+            <meshStandardMaterial {...rimMaterial} />
           </mesh>
           <mesh castShadow position={[0, 1.36, 0]}>
             <boxGeometry args={[0.24, 0.055, 0.055]} />
-            <meshStandardMaterial {...material} />
+            <meshStandardMaterial {...rimMaterial} />
           </mesh>
         </>
       );

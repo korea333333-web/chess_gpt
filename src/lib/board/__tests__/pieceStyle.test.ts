@@ -1,5 +1,6 @@
 import {
   getPieceMaterial,
+  getPieceRimMaterial,
   getPieceSilhouette,
   stauntonPieceOrder
 } from "../pieceStyle";
@@ -17,10 +18,17 @@ describe("staunton piece styling", () => {
     );
   });
 
-  it("uses distinguishable ivory and ebony style materials", () => {
+  it("uses glossy ivory and ebony style materials", () => {
     expect(getPieceMaterial("white").color).not.toBe(getPieceMaterial("black").color);
-    expect(getPieceMaterial("white").roughness).toBeGreaterThan(0.3);
-    expect(getPieceMaterial("black").roughness).toBeGreaterThan(0.3);
+    expect(getPieceMaterial("white").roughness).toBeLessThanOrEqual(0.24);
+    expect(getPieceMaterial("black").roughness).toBeLessThanOrEqual(0.22);
+    expect(getPieceMaterial("black").metalness).toBeGreaterThanOrEqual(0.14);
+  });
+
+  it("uses bright gold trim on both sides like a luxury display set", () => {
+    expect(getPieceRimMaterial("white").color).toBe("#d7a83f");
+    expect(getPieceRimMaterial("black").color).toBe("#d7a83f");
+    expect(getPieceRimMaterial("black").metalness).toBeGreaterThan(0.45);
   });
 
   it("covers every chess piece type", () => {
