@@ -3,7 +3,10 @@ export const woodMoveSoundEnvelope = {
   noiseSeconds: 0.045,
   bodyFrequencyHz: 145,
   clickFrequencyHz: 520,
-  masterGain: 0.18
+  masterGain: 0.36,
+  bodyGain: 0.95,
+  clickGain: 0.52,
+  noiseGain: 0.32
 } as const;
 
 type WebAudioWindow = Window &
@@ -13,9 +16,41 @@ type WebAudioWindow = Window &
 
 let sharedAudioContext: AudioContext | null = null;
 
+export function primeWoodMoveAudio() {
+  const context = getAudioContext();
+
+  if (!context) {
+    return false;
+  }
+
+  if (context.state === "suspended") {
+    void context.resume().catch(() => undefined);
+  }
+
+  return true;
+}
+
 export function playWoodMoveSound() {
-  if (typeof window === "undefined") {
+  const context = getAudioContext();
+
+  if (!context) {
     return;
+  }
+
+  if (context.state === "suspended") {
+    void context
+      .resume()
+      .then(() => scheduleWoodMoveSound(context))
+      .catch(() => undefined);
+    return;
+  }
+
+  scheduleWoodMoveSound(context);
+}
+
+function getAudioContext() {
+  if (typeof window === "undefined") {
+    return null;
   }
 
   const audioWindow = window as WebAudioWindow;
@@ -23,7 +58,7 @@ export function playWoodMoveSound() {
     audioWindow.AudioContext ?? audioWindow.webkitAudioContext;
 
   if (!AudioContextConstructor) {
-    return;
+    return null;
   }
 
   const context =
@@ -33,8 +68,10 @@ export function playWoodMoveSound() {
     });
   sharedAudioContext = context;
 
-  void context.resume();
+  return context;
+}
 
+function scheduleWoodMoveSound(context: AudioContext) {
   const now = context.currentTime;
   const master = context.createGain();
   master.gain.setValueAtTime(0.0001, now);
@@ -54,7 +91,7 @@ export function playWoodMoveSound() {
   body.frequency.exponentialRampToValueAtTime(90, now + 0.13);
 
   const bodyGain = context.createGain();
-  bodyGain.gain.setValueAtTime(0.75, now);
+  bodyGain.gain.setValueAtTime(woodMoveSoundEnvelope.bodyGain, now);
   bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
   body.connect(bodyGain).connect(master);
   body.start(now);
@@ -65,7 +102,7 @@ export function playWoodMoveSound() {
   click.frequency.setValueAtTime(woodMoveSoundEnvelope.clickFrequencyHz, now);
 
   const clickGain = context.createGain();
-  clickGain.gain.setValueAtTime(0.35, now);
+  clickGain.gain.setValueAtTime(woodMoveSoundEnvelope.clickGain, now);
   clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
   click.connect(clickGain).connect(master);
   click.start(now);
@@ -79,7 +116,7 @@ export function playWoodMoveSound() {
   lowPass.frequency.setValueAtTime(1250, now);
 
   const noiseGain = context.createGain();
-  noiseGain.gain.setValueAtTime(0.18, now);
+  noiseGain.gain.setValueAtTime(woodMoveSoundEnvelope.noiseGain, now);
   noiseGain.gain.exponentialRampToValueAtTime(
     0.0001,
     now + woodMoveSoundEnvelope.noiseSeconds

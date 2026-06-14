@@ -9,6 +9,7 @@ import {
   gameMainClassName,
   sidePanelClassName
 } from "@/lib/layout/responsive";
+import { primeWoodMoveAudio } from "@/lib/audio/woodMoveSound";
 import { useGameStore } from "@/lib/store";
 
 const Board3D = dynamic(() => import("@/components/board/Board3D"), {
@@ -48,7 +49,11 @@ export function GameScreen() {
         : null;
 
   return (
-    <main className={gameMainClassName}>
+    <main
+      className={gameMainClassName}
+      onKeyDownCapture={primeWoodMoveAudio}
+      onPointerDownCapture={primeWoodMoveAudio}
+    >
       <section className="mx-auto grid max-w-7xl gap-3 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
         <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
           <div>
