@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAMBIT — 기획 문서 뷰어</title>
+<style>
+  :root{
+    --bg:#14110f; --panel:#1e1a17; --panel2:#252019; --line:#332c24;
+    --text:#e9e3d6; --muted:#9c9081; --gold:#c9a86a; --gold-dim:#8f7748;
+    --green:#7faf6a; --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
+    line-height:1.65;}
+  header{padding:28px 24px 18px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#1b1713,#14110f);}
+  .brand{font-size:30px;letter-spacing:8px;font-weight:700;color:var(--gold);margin:0;}
+  .tagline{color:var(--muted);margin:6px 0 0;font-size:14px;letter-spacing:1px;}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px 80px;}
+  nav{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;gap:6px;
+    padding:12px 0;background:var(--bg);border-bottom:1px solid var(--line);}
+  .tab{padding:8px 16px;border:1px solid var(--line);border-radius:999px;
+    background:var(--panel);color:var(--muted);cursor:pointer;font-size:13.5px;
+    letter-spacing:.5px;transition:.15s;}
+  .tab:hover{border-color:var(--gold-dim);color:var(--text);}
+  .tab.active{background:var(--gold);color:#14110f;border-color:var(--gold);font-weight:600;}
+  .panel{display:none;padding:28px 4px;}
+  .panel.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+  .toolbar{display:flex;justify-content:flex-end;gap:8px;margin:-8px 0 8px;}
+  .copybtn{padding:7px 14px;border:1px solid var(--gold-dim);border-radius:6px;
+    background:transparent;color:var(--gold);cursor:pointer;font-size:12.5px;letter-spacing:.5px;}
+  .copybtn:hover{background:var(--gold);color:#14110f;}
+  .copybtn.ok{background:var(--green);border-color:var(--green);color:#14110f;}
+  /* rendered markdown */
+  .md h1{font-size:25px;color:var(--gold);border-bottom:1px solid var(--line);padding-bottom:10px;letter-spacing:1px;}
+  .md h2{font-size:20px;color:var(--gold);margin-top:34px;}
+  .md h3{font-size:16.5px;color:var(--text);margin-top:24px;}
+  .md h4{font-size:14.5px;color:var(--muted);margin-top:18px;}
+  .md p{margin:10px 0;}
+  .md a{color:var(--gold);}
+  .md strong{color:#f4eddd;}
+  .md code{font-family:var(--mono);background:#2a241d;color:var(--gold);
+    padding:2px 6px;border-radius:4px;font-size:12.5px;}
+  .md pre{background:#0f0d0b;border:1px solid var(--line);border-radius:8px;
+    padding:14px 16px;overflow:auto;}
+  .md pre code{background:none;color:#cdbf9e;padding:0;font-size:12px;line-height:1.45;white-space:pre;}
+  .md blockquote{border-left:3px solid var(--gold-dim);margin:12px 0;padding:4px 16px;
+    color:var(--muted);background:var(--panel);border-radius:0 6px 6px 0;}
+  .md ul,.md ol{padding-left:22px;margin:10px 0;}
+  .md li{margin:5px 0;}
+  .md li.check{list-style:none;margin-left:-18px;}
+  .md li.check::before{content:"☐ ";color:var(--gold-dim);}
+  .md table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;}
+  .md th,.md td{border:1px solid var(--line);padding:8px 12px;text-align:left;}
+  .md th{background:var(--panel2);color:var(--gold);}
+  .md tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  .md hr{border:none;border-top:1px solid var(--line);margin:26px 0;}
+  /* overview */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:18px 0;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .card .k{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+  .card .v{color:var(--text);font-size:15px;margin-top:6px;font-weight:600;}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0;}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;}
+  .step b{color:var(--gold);display:block;font-size:13.5px;}
+  .step small{color:var(--muted);}
+  .arrow{color:var(--gold-dim);font-size:18px;}
+  .prompt{background:#0f0d0b;border:1px solid var(--gold-dim);border-radius:10px;padding:16px;margin:14px 0;
+    font-family:var(--mono);font-size:12.5px;color:#cdbf9e;white-space:pre-wrap;}
+  .note{color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+<header>
+  <h1 class="brand">G A M B I T</h1>
+  <p class="tagline">거의 실사 같은 3D 클래식 체스 · 기획 문서</p>
+</header>
+
+<div class="wrap">
+  <nav id="nav">
+    <button class="tab active" data-t="overview">한눈에 보기</button>
+    <button class="tab" data-t="plan">PLAN</button>
+    <button class="tab" data-t="sprint">SPRINT_PLAN</button>
+    <button class="tab" data-t="test">TEST_CRITERIA</button>
+    <button class="tab" data-t="claude">CLAUDE</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="panel active" id="p-overview">
+    <div class="cards">
+      <div class="card"><div class="k">시점</div><div class="v">버드아이뷰 3D 입체</div></div>
+      <div class="card"><div class="k">1단계 대전</div><div class="v">한 화면 2인 + 컴퓨터 AI</div></div>
+      <div class="card"><div class="k">2단계</div><div class="v">온라인 실시간 대전</div></div>
+      <div class="card"><div class="k">비주얼</div><div class="v">PBR + HDRI 고급 실사감</div></div>
+      <div class="card"><div class="k">플랫폼</div><div class="v">웹 (PC · 모바일)</div></div>
+      <div class="card"><div class="k">1단계 비용</div><div class="v">0원 (오픈소스)</div></div>
+    </div>
+
+    <h2 style="color:var(--gold)">개발 흐름</h2>
+    <div class="flow">
+      <div class="step"><b>Sprint 1</b><small>체스 두뇌 (UI 없음)</small></div><span class="arrow">→</span>
+      <div class="step"><b>Sprint 2</b><small>입체 체스판</small></div><span class="arrow">→</span>
+      <div class="step"><b>Sprint 3</b><small>플레이 가능</small></div><span class="arrow">→</span>
+      <div class="step"><b>Sprint 4</b><small>실사 비주얼</small></div><span class="arrow">→</span>
+      <div class="step"><b>Sprint 5</b><small>배포 & 마무리</small></div>
+    </div>
+
+    <h2 style="color:var(--gold)">기술 스택</h2>
+    <p class="note">Next.js 14 · React Three Fiber(3D) · chess.js(규칙) · Stockfish(AI) · Tailwind · Vercel 배포 · (2단계) Supabase</p>
+
+    <h2 style="color:var(--gold)">Sprint 1 시작 프롬프트</h2>
+    <p class="note">Claude Code에서 이 폴더를 열고 아래를 붙여넣으면 1번 스프린트 개발이 시작됩니다.</p>
+    <div class="prompt" id="startPrompt">PLAN.md의 Sprint 1과 SPRINT_PLAN.md, TEST_CRITERIA.md를 읽고 코드를 작성해.
+Sprint 1(체스 두뇌 — 코어 엔진)의 기능만 구현하고, TEST_CRITERIA.md의 Sprint 1 완료 기준을 모두 통과하도록 해.
+게임 로직과 화면을 분리하는 구조로 만들고(온라인 확장 대비), 코드 작성 후 jest 테스트를 실행해서 결과를 보고해.</div>
+    <div class="toolbar"><button class="copybtn" onclick="copyText(document.getElementById('startPrompt').innerText,this)">시작 프롬프트 복사</button></div>
+  </section>
+
+  <section class="panel" id="p-plan">
+    <div class="toolbar"><button class="copybtn" onclick="copyDoc('md-plan',this)">PLAN.md 복사</button></div>
+    <div class="md" id="r-plan"></div>
+  </section>
+  <section class="panel" id="p-sprint">
+    <div class="toolbar"><button class="copybtn" onclick="copyDoc('md-sprint',this)">SPRINT_PLAN.md 복사</button></div>
+    <div class="md" id="r-sprint"></div>
+  </section>
+  <section class="panel" id="p-test">
+    <div class="toolbar"><button class="copybtn" onclick="copyDoc('md-test',this)">TEST_CRITERIA.md 복사</button></div>
+    <div class="md" id="r-test"></div>
+  </section>
+  <section class="panel" id="p-claude">
+    <div class="toolbar"><button class="copybtn" onclick="copyDoc('md-claude',this)">CLAUDE.md 복사</button></div>
+    <div class="md" id="r-claude"></div>
+  </section>
+</div>
+
+<!-- ====== 문서 원문 (실행되지 않는 텍스트) ====== -->
+<script type="text/markdown" id="md-plan">
+# GAMBIT (갬빗) — 거의 실사 같은 3D 클래식 체스
+
+작업용 제목입니다. 마음에 드는 이름이 있으면 바꿔주세요. (후보: GAMBIT, 체스 누아르, ROYALE, 그랜드체스)
+
+## 1. 프로젝트 비전
+흔한 웹 체스 게임은 평면적이고 밋밋하다. GAMBIT은 "진짜 체스판 앞에 앉은 느낌"을 브라우저에서 구현한다. 위에서 살짝 비스듬히 내려다보는 입체 시점으로, 말 하나하나가 나뭇결·대리석·광택까지 살아있는 클래식 스탠턴 스타일이다. 혼자서는 컴퓨터(AI)와, 옆 사람과는 한 화면에서 번갈아, 나중에는 멀리 있는 친구와 온라인으로 둔다. 핵심 차별점은 **비주얼 퀄리티**다.
+
+## 2. 핵심 기능
+- 입체 체스판 & 버드아이뷰 카메라(드래그 회전·줌, 흑/백 시점 전환)
+- 클래식 스탠턴 말 + PBR 재질 + HDRI 조명 + 부드러운 그림자 + 이동 애니메이션·효과음
+- 게임 규칙(chess.js): 합법 수 하이라이트, 체크/체크메이트/스테일메이트, 캐슬링·앙파상·승급, 무르기, 기보(PGN)
+- 대전 모드: 로컬 2인(핫시트) + 컴퓨터(AI, 난이도 3단계)
+- 편의: 마지막 수 강조, 체크 경고, 잡은 말·점수 표시
+- (2단계) 온라인 실시간 대전: 로그인, 방 코드·매칭, 실시간 동기화, 관전
+
+## 3. UI 레이아웃
+시작 화면: 모드 선택(2인 / 컴퓨터 / 온라인-준비중) + 설정·도움말.
+게임 화면: 상단 상태바(차례·모드·타이머) / 중앙 3D 체스판(버드아이뷰) / 우측 기보·잡은 말 / 하단 컨트롤(새 게임·무르기·항복·음소거·카메라 리셋). 모바일은 패널이 체스판 아래로 접힘.
+
+## 4. 기술적 의사결정
+| 항목 | 선택 |
+| 프레임워크 | Next.js 14 (App Router) |
+| 3D | React Three Fiber + drei + three.js |
+| 규칙 | chess.js |
+| AI | Stockfish (WASM) |
+| 에셋 | 절차적 생성(lathe) + GLTF(나이트) + PBR + HDRI(CC0) |
+| 스타일 | Tailwind CSS |
+| 배포 | Vercel (GitHub 자동배포) |
+| 백엔드(2단계) | Supabase |
+
+실사 전략: 폰·룩·비숍·퀸·킹은 윤곽선을 회전시켜 직접 생성(라이선스 자유), 나이트는 고품질 CC0 GLTF. 모든 말에 PBR 재질·HDRI 반사. 목표는 "고급 원목 체스 세트를 좋은 조명에서 촬영한 제품 사진" 수준. 완전한 영화 CG 실사는 실시간·모바일 제약상 불가.
+
+비용: three/chess.js/Tailwind/Next(무료), Stockfish(GPL 무료), HDRI/텍스처(CC0). 1단계 외부 비용 0원.
+
+성능 목표: 데스크톱 60fps, 모바일 30fps+, 초기 로딩 3초 이내, AI 응답 0.1~2초.
+
+### 4-5. 온라인을 고려한 설계
+게임의 "상태"와 "화면"을 분리한다. 화면은 상태를 보여주기만 하므로, 옆 사람이 두든 컴퓨터가 두든 온라인 상대가 두든 내부 구조가 같다. 1단계를 제대로 만들면 온라인은 "연결선만 추가"하는 일이 된다.
+
+## 5. 수익 모델 (선택)
+1단계 완전 무료. 추후 테마 스킨·비침습 광고·고급 분석(복기) 등 가볍게 검토.
+
+## 6. 대상 사용자
+체스를 두고 싶은 캐주얼~중급 사용자, 고급스러운 경험을 원하는 사람. 1차로는 데모/콘텐츠/포트폴리오로도 강력.
+
+## 7. 향후 확장
+온라인 실시간 대전 · 레이팅/랭킹 · 퍼즐·복기 · 테마 스킨 상점 · 기보 공유·리플레이 · PWA/앱화.
+</script>
+
+<script type="text/markdown" id="md-sprint">
+# GAMBIT (갬빗) 스프린트 계획
+
+## 개발 원칙
+- 한 번에 하나의 스프린트만 진행한다.
+- 각 스프린트의 완료 기준(TEST_CRITERIA.md)을 통과해야 다음으로 넘어간다.
+- 스프린트마다 실행 가능한 결과물이 나와야 한다.
+- 게임 로직과 3D 화면은 항상 분리한다(온라인 확장 대비).
+- 변경마다 즉시 커밋·푸시하고 GitHub → Vercel 자동배포로 확인한다.
+
+## Sprint 1: 체스 두뇌 (코어 엔진)
+목표: 화면 없이도 돌아가는 "체스 규칙 + 게임 상태"를 완성한다.
+- Next.js 14 + TypeScript + Tailwind 셋업, GitHub 리포, Vercel 연결
+- 게임 상태 관리(상태/화면 분리의 "상태"), chess.js 통합
+- 체크/체크메이트/스테일메이트/무승부, 캐슬링·앙파상·승급
+- 수 표현(좌표 + FEN/PGN) 기록, 무르기, zustand 골격
+산출물: src/lib/chess/, src/lib/store.ts, 빌드·배포되는 프로젝트 뼈대
+
+## Sprint 2: 입체 체스판 (3D)
+목표: 3D 체스판과 32개 말이 버드아이뷰로 등장한다.
+- R3F 캔버스, 버드아이뷰 카메라(드래그·줌 제한), 8×8 보드
+- 말 8종(lathe 생성 + 나이트 GLTF), Sprint1 상태와 연결해 정확히 배치
+산출물: Board3D.tsx, Piece.tsx, Camera.tsx
+
+## Sprint 3: 플레이 가능 (상호작용 + 모드)
+목표: 실제로 둘 수 있다 — 핫시트 + AI.
+- 클릭 → 합법 수 하이라이트 → 이동, 애니메이션, 잡기, 체크 경고, 승급 UI
+- 로컬 2인(핫시트) 모드, vs 컴퓨터(Stockfish, 난이도 3단계)
+- 모드 선택 화면, 상태바, 컨트롤, 기보·잡은 말 패널
+산출물: 한 판을 끝까지 둘 수 있는 게임
+
+## Sprint 4: 실사 비주얼 (폴리싱)
+목표: "와" 소리 나는 비주얼.
+- PBR 재질, HDRI 조명, 부드러운 그림자, 후처리(AO/톤매핑/블룸)
+- 이동·잡기 연출, 효과음, 시작/결과 화면, 반응형, 성능 최적화
+산출물: 비주얼이 완성된 1단계 게임
+
+## Sprint 5: 배포 & 마무리
+목표: 실제 링크로 플레이 + 2단계 준비.
+- Vercel 프로덕션 배포, 크로스 브라우저·기기 테스트, 버그 수정
+- 로딩 최적화, 에러 처리, README, 온라인 설계 메모
+산출물: 배포된 게임 URL + 온라인 확장 준비 문서
+
+## 향후: 온라인 실시간 대전
+1단계 완료 후 진행. 로그인·방 코드·실시간 동기화·관전. 로직/화면 분리 덕에 "연결선 추가" 수준.
+
+## 중요 제약사항
+완전 실사 불가(고급 제품 사진 목표) · 나이트 GLTF 확보 변수 · Stockfish 용량(지연 로딩) · 모바일 성능 편차(품질 옵션) · Sprint1에서 로직/화면 분리가 전체 성패의 핵심.
+</script>
+
+<script type="text/markdown" id="md-test">
+# GAMBIT (갬빗) 테스트 기준
+
+각 스프린트는 아래 기준을 모두 통과해야 완료다. 기준은 검증 가능한 형태로 적는다.
+
+## Sprint 1 완료 기준 — 체스 두뇌
+### TC-1.1 게임 상태
+- [ ] 시작 시 표준 포지션 정확 생성 (FEN rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
+- [ ] 합법 수 적용 시 상태(보드·차례) 정확 갱신
+- [ ] 현재 차례(백/흑) 정확 추적
+### TC-1.2 규칙 정확성
+- [ ] 합법 수 목록이 chess.js 기준과 100% 일치
+- [ ] 비합법 수 거부
+- [ ] 캐슬링/앙파상/승급 정상 동작
+### TC-1.3 종료 판정
+- [ ] 바보 메이트(1.f3 e5 2.g4 Qh4#) → 체크메이트 판정
+- [ ] 스테일메이트 정확 판정
+- [ ] 50수·3회반복 무승부 판정, 체크 감지
+### TC-1.4 기보 & 무르기
+- [ ] 둔 수가 PGN으로 기록
+- [ ] 무르기 시 직전 상태로 정확 복원(연속 포함)
+### TC-1.5 셋업 & 배포
+- [ ] npm run dev 실행 / npm run build 성공 / GitHub 푸시 → Vercel 배포 성공
+### TC-1.6 자동화 테스트
+- [ ] jest 단위 테스트 작성 / npm test 전부 통과
+
+## Sprint 2~5 (스프린트 시작 시 세부화)
+- Sprint 2: 버드아이뷰 3D 표시, 시점 회전·줌 제한, 6종 말 식별, 32개 정확 배치, 데스크톱 부드럽게
+- Sprint 3: 클릭 이동·하이라이트, 핫시트 한 판 완주, AI 합법 응수·난이도 3단계, 결과 표시, 버튼 동작
+- Sprint 4: PBR·HDRI 적용("고급 제품 사진"), 그림자·후처리, 연출·효과음, 모바일 30fps+, 시작/결과 화면, 비주얼 7/10+
+- Sprint 5: 실제 URL 완주, 주요 브라우저·모바일 정상, 로딩 3초 이내, README·온라인 메모
+</script>
+
+<script type="text/markdown" id="md-claude">
+# GAMBIT (갬빗) 프로젝트 컨텍스트
+
+## 개요
+거의 실사 같은 3D 클래식 체스 웹앱. 버드아이뷰 입체 시점, 클래식 스탠턴 말 + PBR·HDRI. 1단계는 한 화면 2인 + 컴퓨터 AI, 추후 온라인 실시간 대전으로 확장.
+
+## 개발 방식 (3-Agent Harness)
+PLAN.md / SPRINT_PLAN.md / TEST_CRITERIA.md 기반. 코드 작성 전 완료 기준 확인, 작성 후 테스트 실행·보고.
+
+## 기술 스택
+Next.js 14 + TS · React Three Fiber/drei/three.js · chess.js · Stockfish(WASM) · zustand · Tailwind · jest · (2단계) Supabase · GitHub · Vercel.
+
+## 파이프라인
+로컬 개발 → GitHub Push(main) → Vercel 자동 배포. 결과 확인은 가급적 배포본으로.
+
+## 규칙
+1. 한 번에 하나의 스프린트만.
+2. 테스트 통과 없이 다음 스프린트 금지.
+3. 게임 로직과 3D 화면을 항상 분리(화면은 상태를 보여주기만).
+4. 체스 규칙은 chess.js로 검증(정확도 최우선).
+5. AI 특유의 뻔한 UI(보라 그라데이션·흰 카드) 회피 — 고급·클래식 비주얼.
+6. 에러 시 로그 직접 분석 후 수정.
+7. 한글 파일명·데이터 주의. .env 푸시 금지.
+8. 변경마다 즉시 커밋·푸시(한글 구체적 메시지).
+9. 3D 에셋 라이선스(CC0) 확인·출처 기록.
+
+## 명령어
+npm run dev / build / lint / test · git add·commit·push origin main · (2단계) npx supabase ...
+</script>
+
+<script>
+function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function inline(s){
+  s=escapeHtml(s);
+  s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  return s;
+}
+function renderMd(src){
+  const lines=src.replace(/\r/g,"").split("\n");
+  let html="",i=0;
+  while(i<lines.length){
+    let ln=lines[i];
+    // code fence
+    if(/^```/.test(ln.trim())){
+      let buf=[];i++;
+      while(i<lines.length && !/^```/.test(lines[i].trim())){buf.push(escapeHtml(lines[i]));i++;}
+      i++; html+="<pre><code>"+buf.join("\n")+"</code></pre>"; continue;
+    }
+    // table
+    if(ln.indexOf("|")>-1 && i+1<lines.length && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i+1]) && lines[i+1].indexOf("-")>-1){
+      const head=ln.split("|").map(c=>c.trim()).filter(c=>c.length);
+      i+=2; let rows=[];
+      while(i<lines.length && lines[i].indexOf("|")>-1){
+        rows.push(lines[i].split("|").map(c=>c.trim()).filter((c,idx,a)=>!(idx===0&&c==="")&&!(idx===a.length-1&&c==="")));
+        i++;
+      }
+      let t="<table><thead><tr>"+head.map(h=>"<th>"+inline(h)+"</th>").join("")+"</tr></thead><tbody>";
+      rows.forEach(r=>{t+="<tr>"+r.map(c=>"<td>"+inline(c)+"</td>").join("")+"</tr>";});
+      t+="</tbody></table>"; html+=t; continue;
+    }
+    // heading
+    let h=ln.match(/^(#{1,6})\s+(.*)$/);
+    if(h){const lv=h[1].length;html+="<h"+lv+">"+inline(h[2])+"</h"+lv+">";i++;continue;}
+    // hr
+    if(/^\s*---+\s*$/.test(ln)){html+="<hr>";i++;continue;}
+    // blockquote
+    if(/^\s*>\s?/.test(ln)){
+      let buf=[];
+      while(i<lines.length && /^\s*>\s?/.test(lines[i])){buf.push(lines[i].replace(/^\s*>\s?/,""));i++;}
+      html+="<blockquote>"+inline(buf.join(" "))+"</blockquote>";continue;
+    }
+    // unordered list (incl checkbox)
+    if(/^\s*[-*]\s+/.test(ln)){
+      let buf="<ul>";
+      while(i<lines.length && /^\s*[-*]\s+/.test(lines[i])){
+        let item=lines[i].replace(/^\s*[-*]\s+/,"");
+        let cb=item.match(/^\[([ xX])\]\s+(.*)$/);
+        if(cb){buf+='<li class="check">'+inline(cb[2])+"</li>";}
+        else{buf+="<li>"+inline(item)+"</li>";}
+        i++;
+      }
+      buf+="</ul>";html+=buf;continue;
+    }
+    // ordered list
+    if(/^\s*\d+\.\s+/.test(ln)){
+      let buf="<ol>";
+      while(i<lines.length && /^\s*\d+\.\s+/.test(lines[i])){
+        buf+="<li>"+inline(lines[i].replace(/^\s*\d+\.\s+/,""))+"</li>";i++;
+      }
+      buf+="</ol>";html+=buf;continue;
+    }
+    // blank
+    if(ln.trim()===""){i++;continue;}
+    // paragraph (gather until blank/special)
+    let buf=[ln];i++;
+    while(i<lines.length && lines[i].trim()!=="" && !/^(#{1,6}\s|```|\s*[-*]\s|\s*\d+\.\s|\s*>|\s*---+\s*$)/.test(lines[i]) && lines[i].indexOf("|")===-1){
+      buf.push(lines[i]);i++;
+    }
+    html+="<p>"+inline(buf.join(" "))+"</p>";
+  }
+  return html;
+}
+function loadDoc(id,target){
+  const raw=document.getElementById(id).textContent;
+  document.getElementById(target).innerHTML=renderMd(raw);
+}
+loadDoc("md-plan","r-plan");
+loadDoc("md-sprint","r-sprint");
+loadDoc("md-test","r-test");
+loadDoc("md-claude","r-claude");
+
+// tabs
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("p-"+t.dataset.t).classList.add("active");
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+});
+// copy
+function copyText(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const old=btn.textContent;btn.textContent="복사됨 ✓";btn.classList.add("ok");
+    setTimeout(()=>{btn.textContent=old;btn.classList.remove("ok");},1400);
+  });
+}
+function copyDoc(id,btn){copyText(document.getElementById(id).textContent.trim(),btn);}
+</script>
+</body>
+</html>
