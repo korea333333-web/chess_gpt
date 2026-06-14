@@ -26,7 +26,7 @@ export function MoveList({ history }: MoveListProps) {
   return (
     <div>
       <p className="text-sm text-[#a18d70]">기보</p>
-      <div className="mt-2 max-h-64 overflow-y-auto border border-[#6f5636] bg-black/20">
+      <div className="mt-2 max-h-40 overflow-y-auto border border-[#6f5636] bg-black/20 sm:max-h-64">
         {rows.length === 0 ? (
           <p className="p-3 text-sm text-[#d5c7ad]">아직 둔 수가 없습니다.</p>
         ) : (

@@ -14,7 +14,7 @@ type ControlsProps = {
 };
 
 const buttonBase =
-  "border border-[#6f5636] px-3 py-2 text-sm text-[#e5dac5] transition hover:border-brass hover:text-ivory";
+  "min-h-11 border border-[#6f5636] px-2 py-2 text-sm text-[#e5dac5] transition hover:border-brass hover:text-ivory disabled:opacity-40 sm:px-3";
 const activeButton = "border-brass bg-brass/20 text-ivory";
 
 export function Controls({
@@ -27,7 +27,7 @@ export function Controls({
   onResign
 }: ControlsProps) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3 sm:gap-5">
       <div>
         <p className="text-sm text-[#a18d70]">대전 모드</p>
         <div className="mt-2 grid grid-cols-2 gap-2">

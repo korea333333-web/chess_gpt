@@ -5,6 +5,7 @@ import type { Square as ChessSquare } from "chess.js";
 import { Suspense } from "react";
 import { squareToBoardPosition, files, ranks } from "@/lib/board/coordinates";
 import type { GameSnapshot } from "@/lib/chess/types";
+import { boardViewportClassName } from "@/lib/layout/responsive";
 import { fixedCameraView } from "@/lib/scene/camera";
 import { Camera } from "@/components/scene/Camera";
 import { Lighting } from "@/components/scene/Lighting";
@@ -32,7 +33,7 @@ export default function Board3D({
     .flatMap((rank) => files.map((file) => `${file}${rank}` as ChessSquare));
 
   return (
-    <div className="h-[min(72vh,760px)] min-h-[520px] w-full overflow-hidden border border-[#6f5636] bg-[#18100b]">
+    <div className={boardViewportClassName}>
       <Canvas
         shadows
         gl={{ antialias: true, alpha: false }}

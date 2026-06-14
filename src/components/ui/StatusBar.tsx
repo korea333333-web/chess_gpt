@@ -27,18 +27,24 @@ export function StatusBar({
         : "대국 진행 중");
 
   return (
-    <div className="grid gap-3 border border-[#6f5636] bg-black/25 p-4 text-sm text-[#e5dac5] md:grid-cols-3">
+    <div className="grid grid-cols-3 gap-2 border border-[#6f5636] bg-black/25 p-3 text-xs text-[#e5dac5] sm:gap-3 sm:p-4 sm:text-sm">
       <div>
         <p className="text-[#a18d70]">차례</p>
-        <p className="mt-1 text-xl font-semibold text-ivory">{turnLabel}</p>
+        <p className="mt-1 text-sm font-semibold text-ivory sm:text-xl">
+          {turnLabel}
+        </p>
       </div>
       <div>
         <p className="text-[#a18d70]">모드</p>
-        <p className="mt-1 text-xl font-semibold text-ivory">{modeLabel}</p>
+        <p className="mt-1 text-sm font-semibold text-ivory sm:text-xl">
+          {modeLabel}
+        </p>
       </div>
       <div>
         <p className="text-[#a18d70]">상태</p>
-        <p className="mt-1 text-xl font-semibold text-ivory">{stateLabel}</p>
+        <p className="mt-1 text-sm font-semibold text-ivory sm:text-xl">
+          {stateLabel}
+        </p>
       </div>
     </div>
   );
