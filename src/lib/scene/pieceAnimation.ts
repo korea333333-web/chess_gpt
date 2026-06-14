@@ -14,6 +14,13 @@ export function smoothMoveProgress(progress: number) {
     : 1 - Math.pow(-2 * clamped + 2, 3) / 2;
 }
 
+export function shouldStartMoveAnimation(
+  previousAnimationId: number | undefined,
+  nextAnimationId: number | undefined
+) {
+  return nextAnimationId !== undefined && nextAnimationId !== previousAnimationId;
+}
+
 export function getLiftedMovePosition(
   from: BoardPosition,
   to: BoardPosition,

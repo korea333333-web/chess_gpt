@@ -1,6 +1,7 @@
 import {
   getLiftedMovePosition,
   pieceMoveAnimation,
+  shouldStartMoveAnimation,
   smoothMoveProgress
 } from "../pieceAnimation";
 
@@ -36,5 +37,12 @@ describe("piece movement animation", () => {
     expect(pieceMoveAnimation.durationMs).toBeLessThanOrEqual(700);
     expect(smoothMoveProgress(0.25)).toBeLessThan(0.25);
     expect(smoothMoveProgress(0.75)).toBeGreaterThan(0.75);
+  });
+
+  it("starts a move animation only for a new animation id", () => {
+    expect(shouldStartMoveAnimation(undefined, undefined)).toBe(false);
+    expect(shouldStartMoveAnimation(3, 3)).toBe(false);
+    expect(shouldStartMoveAnimation(undefined, 4)).toBe(true);
+    expect(shouldStartMoveAnimation(3, 4)).toBe(true);
   });
 });

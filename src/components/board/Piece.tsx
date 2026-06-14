@@ -14,7 +14,8 @@ import {
 import { playWoodMoveSound } from "@/lib/audio/woodMoveSound";
 import {
   getLiftedMovePosition,
-  pieceMoveAnimation
+  pieceMoveAnimation,
+  shouldStartMoveAnimation
 } from "@/lib/scene/pieceAnimation";
 
 type PieceProps = {
@@ -112,23 +113,44 @@ export function Piece({
   const rimMaterial = getPieceRimMaterial(piece.color);
   const groupRef = useRef<Group>(null);
   const animationStartMsRef = useRef<number | null>(null);
+  const startedAnimationIdRef = useRef<number | undefined>(undefined);
   const soundPlayedRef = useRef(false);
+  const animationFromX = animationFrom?.[0] ?? null;
+  const animationFromZ = animationFrom?.[2] ?? null;
+  const positionX = position[0];
+  const positionZ = position[2];
 
   useEffect(() => {
-    animationStartMsRef.current = null;
-    soundPlayedRef.current = false;
-
     if (!groupRef.current) {
       return;
     }
 
-    const startPosition = animationFrom ?? position;
-    groupRef.current.position.set(
-      startPosition[0],
-      pieceMoveAnimation.baseY,
-      startPosition[2]
-    );
-  }, [animationFrom, animationId, position]);
+    if (
+      animationFromX !== null &&
+      animationFromZ !== null &&
+      shouldStartMoveAnimation(startedAnimationIdRef.current, animationId)
+    ) {
+      startedAnimationIdRef.current = animationId;
+      animationStartMsRef.current = null;
+      soundPlayedRef.current = false;
+      groupRef.current.position.set(
+        animationFromX,
+        pieceMoveAnimation.baseY,
+        animationFromZ
+      );
+      return;
+    }
+
+    if (animationFromX === null || animationFromZ === null) {
+      animationStartMsRef.current = null;
+      soundPlayedRef.current = true;
+      groupRef.current.position.set(
+        positionX,
+        pieceMoveAnimation.baseY,
+        positionZ
+      );
+    }
+  }, [animationFromX, animationFromZ, animationId, positionX, positionZ]);
 
   useFrame(({ clock }) => {
     const group = groupRef.current;
