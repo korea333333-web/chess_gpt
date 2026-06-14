@@ -4,7 +4,6 @@ import type { Square } from "chess.js";
 import { create } from "zustand";
 import { chooseComputerMove, type ComputerDifficulty } from "./ai/stockfish";
 import { getComputerMoveDelay } from "./ai/timing";
-import { playWoodMoveSound } from "./audio/woodMoveSound";
 import { createGameEngine } from "./chess/engine";
 import type {
   GameSnapshot,
@@ -21,6 +20,12 @@ type GameResult =
   | { type: "resigned"; winner: "white" | "black" }
   | { type: "finished"; message: string };
 
+export type VisualMove = {
+  from: Square;
+  to: Square;
+  animationId?: number;
+};
+
 type GameStore = {
   snapshot: GameSnapshot;
   mode: GameMode;
@@ -28,7 +33,8 @@ type GameStore = {
   selectedSquare: Square | null;
   legalTargets: Square[];
   pendingPromotion: Omit<MoveInput, "promotion"> | null;
-  lastMove: { from: Square; to: Square } | null;
+  lastMove: VisualMove | null;
+  moveAnimationId: number;
   result: GameResult;
   isComputerThinking: boolean;
   setMode: (mode: GameMode) => void;
@@ -52,6 +58,7 @@ export const useGameStore = create<GameStore>((set) => ({
   legalTargets: [],
   pendingPromotion: null,
   lastMove: null,
+  moveAnimationId: 0,
   result: { type: "active" },
   isComputerThinking: false,
   setMode(mode) {
@@ -63,6 +70,7 @@ export const useGameStore = create<GameStore>((set) => ({
       legalTargets: [],
       pendingPromotion: null,
       lastMove: null,
+      moveAnimationId: 0,
       result: { type: "active" },
       isComputerThinking: false
     });
@@ -113,19 +121,22 @@ export const useGameStore = create<GameStore>((set) => ({
         return;
       }
 
+      const animationId = state.moveAnimationId + 1;
+
       set({
         snapshot: result.snapshot,
         selectedSquare: null,
         legalTargets: [],
         pendingPromotion: null,
+        moveAnimationId: animationId,
         lastMove: {
           from: resolution.move.from,
-          to: resolution.move.to
+          to: resolution.move.to,
+          animationId
         },
         result: getResultState(result.snapshot)
       });
 
-      playWoodMoveSound();
       maybeQueueComputerMove();
       return;
     }
@@ -147,37 +158,36 @@ export const useGameStore = create<GameStore>((set) => ({
       promotion: piece
     };
     const result = engine.move(move);
+    const animationId = state.moveAnimationId + 1;
 
     set({
       snapshot: result.snapshot,
       selectedSquare: null,
       legalTargets: [],
       pendingPromotion: null,
-      lastMove: result.ok ? { from: move.from, to: move.to } : state.lastMove,
+      moveAnimationId: result.ok ? animationId : state.moveAnimationId,
+      lastMove: result.ok
+        ? { from: move.from, to: move.to, animationId }
+        : state.lastMove,
       result: getResultState(result.snapshot)
     });
-
-    if (result.ok) {
-      playWoodMoveSound();
-    }
 
     maybeQueueComputerMove();
   },
   move(input) {
+    const state = useGameStore.getState();
     const result = engine.move(input);
+    const animationId = state.moveAnimationId + 1;
 
     set({
       snapshot: result.snapshot,
       selectedSquare: null,
       legalTargets: [],
       pendingPromotion: null,
-      lastMove: result.ok ? { from: input.from, to: input.to } : null,
+      moveAnimationId: result.ok ? animationId : state.moveAnimationId,
+      lastMove: result.ok ? { from: input.from, to: input.to, animationId } : null,
       result: getResultState(result.snapshot)
     });
-
-    if (result.ok) {
-      playWoodMoveSound();
-    }
 
     return result;
   },
@@ -213,6 +223,7 @@ export const useGameStore = create<GameStore>((set) => ({
       legalTargets: [],
       pendingPromotion: null,
       lastMove: null,
+      moveAnimationId: 0,
       result: { type: "active" },
       isComputerThinking: false
     });
@@ -238,6 +249,7 @@ export const useGameStore = create<GameStore>((set) => ({
       legalTargets: [],
       pendingPromotion: null,
       lastMove: null,
+      moveAnimationId: 0,
       result: getResultState(snapshot),
       isComputerThinking: false
     });
@@ -278,19 +290,20 @@ function maybeQueueComputerMove() {
     }
 
     const result = engine.move(aiMove);
+    const animationId = latest.moveAnimationId + 1;
     useGameStore.setState({
       snapshot: result.snapshot,
       selectedSquare: null,
       legalTargets: [],
       pendingPromotion: null,
-      lastMove: result.ok ? { from: aiMove.from, to: aiMove.to } : latest.lastMove,
+      moveAnimationId: result.ok ? animationId : latest.moveAnimationId,
+      lastMove: result.ok
+        ? { from: aiMove.from, to: aiMove.to, animationId }
+        : latest.lastMove,
       result: getResultState(result.snapshot),
       isComputerThinking: false
     });
 
-    if (result.ok) {
-      playWoodMoveSound();
-    }
   }, delayMs);
 }
 

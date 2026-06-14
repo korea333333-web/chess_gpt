@@ -13,6 +13,7 @@ import {
 } from "@/lib/scene/renderQuality";
 import { Camera } from "@/components/scene/Camera";
 import { Lighting } from "@/components/scene/Lighting";
+import type { VisualMove } from "@/lib/store";
 import { Piece } from "./Piece";
 import { Square } from "./Square";
 
@@ -20,7 +21,7 @@ type Board3DProps = {
   snapshot: GameSnapshot;
   selectedSquare?: ChessSquare | null;
   legalTargets?: ChessSquare[];
-  lastMove?: { from: ChessSquare; to: ChessSquare } | null;
+  lastMove?: VisualMove | null;
   onSquareClick?: (square: ChessSquare) => void;
 };
 
@@ -68,6 +69,12 @@ export default function Board3D({
             {snapshot.board.map((piece) => (
               <Piece
                 key={`${piece.color}-${piece.type}-${piece.square}`}
+                animationFrom={
+                  lastMove?.animationId && piece.square === lastMove.to
+                    ? squareToBoardPosition(lastMove.from)
+                    : undefined
+                }
+                animationId={lastMove?.animationId}
                 piece={piece}
                 position={squareToBoardPosition(piece.square)}
                 onClick={onSquareClick}

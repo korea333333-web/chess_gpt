@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
-import { Vector2 } from "three";
+import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Group, Vector2 } from "three";
+import type { BoardPosition } from "@/lib/board/coordinates";
 import type { BoardPiece } from "@/lib/chess/types";
 import {
   getPieceMaterial,
@@ -9,10 +11,17 @@ import {
   type PieceColor,
   type PieceType
 } from "@/lib/board/pieceStyle";
+import { playWoodMoveSound } from "@/lib/audio/woodMoveSound";
+import {
+  getLiftedMovePosition,
+  pieceMoveAnimation
+} from "@/lib/scene/pieceAnimation";
 
 type PieceProps = {
   piece: BoardPiece;
-  position: [number, number, number];
+  position: BoardPosition;
+  animationFrom?: BoardPosition;
+  animationId?: number;
   onClick?: (square: BoardPiece["square"]) => void;
 };
 
@@ -92,13 +101,77 @@ const latheProfiles: Record<PieceType, Array<[number, number]>> = {
   ]
 };
 
-export function Piece({ piece, position, onClick }: PieceProps) {
+export function Piece({
+  piece,
+  position,
+  animationFrom,
+  animationId,
+  onClick
+}: PieceProps) {
   const material = getPieceMaterial(piece.color);
   const rimMaterial = getPieceRimMaterial(piece.color);
+  const groupRef = useRef<Group>(null);
+  const animationStartMsRef = useRef<number | null>(null);
+  const soundPlayedRef = useRef(false);
+
+  useEffect(() => {
+    animationStartMsRef.current = null;
+    soundPlayedRef.current = false;
+
+    if (!groupRef.current) {
+      return;
+    }
+
+    const startPosition = animationFrom ?? position;
+    groupRef.current.position.set(
+      startPosition[0],
+      pieceMoveAnimation.baseY,
+      startPosition[2]
+    );
+  }, [animationFrom, animationId, position]);
+
+  useFrame(({ clock }) => {
+    const group = groupRef.current;
+
+    if (!group) {
+      return;
+    }
+
+    if (!animationFrom) {
+      group.position.set(position[0], pieceMoveAnimation.baseY, position[2]);
+      return;
+    }
+
+    const nowMs = clock.elapsedTime * 1000;
+
+    if (animationStartMsRef.current === null) {
+      animationStartMsRef.current = nowMs;
+    }
+
+    const progress =
+      (nowMs - animationStartMsRef.current) / pieceMoveAnimation.durationMs;
+    const animatedPosition = getLiftedMovePosition(
+      animationFrom,
+      position,
+      progress
+    );
+
+    group.position.set(...animatedPosition);
+
+    if (progress >= 1 && !soundPlayedRef.current) {
+      soundPlayedRef.current = true;
+      playWoodMoveSound();
+    }
+  });
 
   return (
     <group
-      position={[position[0], 0.02, position[2]]}
+      ref={groupRef}
+      position={[
+        animationFrom?.[0] ?? position[0],
+        pieceMoveAnimation.baseY,
+        animationFrom?.[2] ?? position[2]
+      ]}
       onClick={(event) => {
         event.stopPropagation();
         onClick?.(piece.square);
