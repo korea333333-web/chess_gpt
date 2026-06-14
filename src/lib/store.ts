@@ -3,6 +3,8 @@
 import type { Square } from "chess.js";
 import { create } from "zustand";
 import { chooseComputerMove, type ComputerDifficulty } from "./ai/stockfish";
+import { getComputerMoveDelay } from "./ai/timing";
+import { playWoodMoveSound } from "./audio/woodMoveSound";
 import { createGameEngine } from "./chess/engine";
 import type {
   GameSnapshot,
@@ -123,6 +125,7 @@ export const useGameStore = create<GameStore>((set) => ({
         result: getResultState(result.snapshot)
       });
 
+      playWoodMoveSound();
       maybeQueueComputerMove();
       return;
     }
@@ -154,6 +157,10 @@ export const useGameStore = create<GameStore>((set) => ({
       result: getResultState(result.snapshot)
     });
 
+    if (result.ok) {
+      playWoodMoveSound();
+    }
+
     maybeQueueComputerMove();
   },
   move(input) {
@@ -167,6 +174,10 @@ export const useGameStore = create<GameStore>((set) => ({
       lastMove: result.ok ? { from: input.from, to: input.to } : null,
       result: getResultState(result.snapshot)
     });
+
+    if (result.ok) {
+      playWoodMoveSound();
+    }
 
     return result;
   },
@@ -245,6 +256,7 @@ function maybeQueueComputerMove() {
   }
 
   useGameStore.setState({ isComputerThinking: true });
+  const delayMs = getComputerMoveDelay(state.difficulty);
 
   setTimeout(() => {
     const latest = useGameStore.getState();
@@ -275,7 +287,11 @@ function maybeQueueComputerMove() {
       result: getResultState(result.snapshot),
       isComputerThinking: false
     });
-  }, 450);
+
+    if (result.ok) {
+      playWoodMoveSound();
+    }
+  }, delayMs);
 }
 
 function getResultState(snapshot: GameSnapshot): GameResult {
